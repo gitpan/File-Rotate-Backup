@@ -2,20 +2,22 @@
 # Creation date: 2003-04-12 22:43:55
 # Authors: Don
 # Change log:
-# $Id: Copy.pm,v 1.8 2003/04/14 00:03:47 don Exp $
+# $Id: Copy.pm,v 1.9 2004/02/17 01:29:32 don Exp $
 
 use strict;
 
 {   package File::Rotate::Backup::Copy;
 
     use vars qw($VERSION);
-    $VERSION = do { my @r=(q$Revision: 1.8 $=~/\d+/g); sprintf "%d."."%02d"x$#r,@r };
+    $VERSION = do { my @r=(q$Revision: 1.9 $=~/\d+/g); sprintf "%d."."%02d"x$#r,@r };
 
     use File::Spec;
+    use Fcntl ();
 
     sub new {
-        my ($proto) = @_;
-        my $self = bless {}, ref($proto) || $proto;
+        my ($proto, $params) = @_;
+        $params = {} unless ref($params) eq 'HASH';
+        my $self = bless { _params => $params }, ref($proto) || $proto;
         return $self;
     }
 
@@ -200,7 +202,23 @@ use strict;
             return $self->_removeDirectoryRecursive($victim);
         } else {
             $self->debugPrint(1, "Removing $victim\n");
-            return unlink $victim;
+            my $params = $self->_getParams;
+            if ($$params{use_flock}) {
+                local(*FILE);
+                open(FILE, '+<' . $victim);
+                unless (CORE::flock(FILE, &Fcntl::LOCK_EX() | &Fcntl::LOCK_NB)) {
+                    # can't get lock
+                    close FILE;
+                    $self->debugPrint(1, "Could not get lock on $victim -- not removing\n");
+                    return undef;
+                }
+                my $rv = unlink $victim;
+                CORE::flock(FILE, &Fcntl::LOCK_UN);
+                close FILE;
+                return $rv;
+            } else {
+                return unlink $victim;
+            }
         }
     }
 
@@ -282,7 +300,11 @@ use strict;
         my $fh = $$self{_debug_fh};
         print $fh $str;
     }
-    
+
+    sub _getParams {
+        my ($self) = @_;
+        return $$self{_params} || {};
+    }
 }
 
 1;
@@ -315,6 +337,6 @@ File::Rotate::Backup::Copy -
 
 =head1 VERSION
 
-$Id: Copy.pm,v 1.8 2003/04/14 00:03:47 don Exp $
+$Id: Copy.pm,v 1.9 2004/02/17 01:29:32 don Exp $
 
 =cut

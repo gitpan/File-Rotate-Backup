@@ -2,7 +2,13 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.20 2003/05/17 00:03:38 don Exp $
+# $Id: Backup.pm,v 1.25 2004/02/17 02:37:26 don Exp $
+#
+# Copyright (c) 2003-2004 Don Owens
+#
+# All rights reserved. This program is free software; you can
+# redistribute it and/or modify it under the same terms as Perl
+# itself.
 
 =pod
 
@@ -20,6 +26,7 @@ rotate them on unix.
                    secondary_backup_dir => '/backups2',
                    secondary_archive_copies => 2,
                    verbose => 1,
+                   use_flock => 1,
                  };
 
     my $backup = File::Rotate::Backup->new($params);
@@ -57,7 +64,7 @@ use File::Copy ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = 0.06; # update below in POD as well
+        $VERSION = '0.07'; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -73,6 +80,7 @@ use File::Copy ();
                    secondary_backup_dir => '/backups2',
                    secondary_archive_copies => 2,
                    verbose => 1,
+                   use_flock => 1,
                  };
 
     my $backup = File::Rotate::Backup->new($params);
@@ -115,6 +123,15 @@ directory.
 If set to a true value, status messages will be printed as the
 files are being processed.
 
+=item use_flock
+
+If set to a true value, an attempt will be made to acquire a
+write lock on any file to be removed during rotation.  If a lock
+cannot be acquired, the file will not be removed.  This is useful
+for concurrency control, e.g., when your backup script gets run
+at the same time as another script that is writing the backups to
+tape.
+
 =back
 
 =cut
@@ -133,6 +150,7 @@ files are being processed.
         $self->setSecondaryArchiveCopies($$params{secondary_archive_copies});
         $self->setFilePrefix($$params{file_prefix});
         $self->_setVerbose($$params{verbose});
+        $self->_setUseFileLock($$params{use_flock});
         
         return $self;
     }
@@ -277,8 +295,8 @@ rotate() method is called.
                 unless ($secondary_backup_dir eq '') {
                     $self->copy($path, "$secondary_backup_dir/");
                 }
-                $self->remove($path);
                 $self->_debugPrint("removing $path\n");
+                $self->remove($path);
             }
         }
 
@@ -287,8 +305,8 @@ rotate() method is called.
             my @dirs_to_delete = @$dirs[0 .. $num_to_delete - 1];
             foreach my $dir (@dirs_to_delete) {
                 my $path = "$backup_dir/$dir";
-                $self->remove($path);
                 $self->_debugPrint("removing $path\n");
+                $self->remove($path);
             }
 
         }
@@ -328,6 +346,16 @@ rotate() method is called.
         return $$self{_verbose} = $val;
     }
 
+    sub _getUseFileLock {
+        my ($self) = @_;
+        return $$self{_use_flock};
+    }
+    
+    sub _setUseFileLock {
+        my ($self, $val) = @_;
+        $$self{_use_flock} = $val;
+    }
+
     sub copy {
         my ($self, $src, $dst) = @_;
 
@@ -339,7 +367,7 @@ rotate() method is called.
         my ($self) = @_;
         my $copy = $$self{_copy_obj};
         unless ($copy) {
-            $copy = File::Rotate::Backup::Copy->new;
+            $copy = File::Rotate::Backup::Copy->new({ use_flock => $self->_getUseFileLock });
             $$self{_copy_obj} = $copy;
         }
         
@@ -367,7 +395,7 @@ rotate() method is called.
         $dir = $self->getBackupDir if $dir eq '';
         local(*DIR);
         opendir(DIR, $dir) or return undef;
-        my @files = grep { m/^$prefix\d+-\d+-\d+_\d+_\d+_\d+/ and -f "$dir/$_" } readdir DIR;
+        my @files = grep { m/^$prefix\d+-\d+-\d+_\d+_\d+_\d+/ and not -d "$dir/$_" } readdir DIR;
         closedir DIR;
 
         @files = sort { $a cmp $b } @files;
@@ -597,7 +625,7 @@ __END__
 
 =head1 COPYRIGHT
 
-    Copyright (c) 2003 Don Owens
+    Copyright (c) 2003-2004 Don Owens
 
     All rights reserved. This program is free software; you can
     redistribute it and/or modify it under the same terms as Perl
@@ -605,7 +633,7 @@ __END__
 
 =head1 VERSION
 
-    0.06
+    0.07
 
 =cut
 

@@ -10,6 +10,7 @@ SYNOPSIS
                        secondary_backup_dir => '/backups2',
                        secondary_archive_copies => 2,
                        verbose => 1,
+                       use_flock => 1,
                      };
 
         my $backup = File::Rotate::Backup->new($params);
@@ -42,6 +43,7 @@ METHODS
                        secondary_backup_dir => '/backups2',
                        secondary_archive_copies => 2,
                        verbose => 1,
+                       use_flock => 1,
                      };
 
         my $backup = File::Rotate::Backup->new($params);
@@ -75,6 +77,13 @@ METHODS
         If set to a true value, status messages will be printed as the files
         are being processed.
 
+    use_flock
+        If set to a true value, an attempt will be made to acquire a write
+        lock on any file to be removed during rotation. If a lock cannot be
+        acquired, the file will not be removed. This is useful for
+        concurrency control, e.g., when your backup script gets run at the
+        same time as another script that is writing the backups to tape.
+
   backup(\@conf)
     Makes the backup -- creates the backed up directory and archive file.
     @conf is an array where each element is either a string or an array. If
@@ -82,12 +91,20 @@ METHODS
     be backed up. If the element is an array, the first element is expected
     to be a directory that is to be backed up, and the second should be the
     name the directory is called once it has been copied to the backup
-    directory.
+    directory. The return value is the name of the archive file created.
 
   rotate()
     Rotates the backup directories and archive files. The number of archive
     files to keep and the number of directories to keep are specified in the
     new() constructor.
+
+  my $archives = getArchiveDeleteList()
+    Returns a list of archive files that will get deleted if the rotate()
+    method is called.
+
+  my $dirs = getDirDeleteList()
+    Returns a list of directories that will get deleted if the rotate()
+    method is called.
 
   setCompressProgramPath($path)
     Set the path to the compression program you want to use when creating
@@ -109,12 +126,12 @@ AUTHOR
         Don Owens <don@owensnet.com>
 
 COPYRIGHT
-        Copyright (c) 2003 Don Owens
+        Copyright (c) 2003-2004 Don Owens
 
         All rights reserved. This program is free software; you can
         redistribute it and/or modify it under the same terms as Perl
         itself.
 
 VERSION
-        0.04
+        0.07
 
