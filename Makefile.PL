@@ -3,7 +3,7 @@
 # Creation date: 2003-04-06 13:26:22
 # Authors: Don
 # Change log:
-# $Id: Makefile.PL,v 1.3 2003/04/13 20:47:17 don Exp $
+# $Id: Makefile.PL,v 1.4 2003/04/14 04:05:48 don Exp $
 
 use strict;
 use Carp;
@@ -23,6 +23,8 @@ use Carp;
                   PM => { 'Backup.pm' => '$(INST_LIBDIR)/Backup.pm',
                           'Backup/Copy.pm' => '$(INST_LIBDIR)/Backup/Copy.pm',
                         },
+                  PREREQ_PM => { 'File::Spec' => 0,
+                               },
                   dist => { COMPRESS => 'gzip -9f', SUFFIX => 'gz' },
                   DIR => [],
                   EXE_FILES => [],

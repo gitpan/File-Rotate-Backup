@@ -2,12 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.16 2003/04/14 00:05:59 don Exp $
-
-# TODO
-# * Allow setting verbose
-# * Make work on solaris
-# * Secondary backup space
+# $Id: Backup.pm,v 1.17 2003/04/14 04:05:48 don Exp $
 
 =pod
 
@@ -18,20 +13,22 @@ rotate them on unix.
 
 =head1 SYNOPSIS
 
-my $backup = File::Rotate::Backup->new({ archive_copies => 2,
-                                         dir_copies => 1,
-                                         backup_dir => '/backups',
-                                         file_prefix => 'backup_'
-                                         secondary_backup_dir => '/backups2',
-                                         secondary_archive_copies => 2,
-                                         verbose => 1,
-                                       });
+    my $params = { archive_copies => 2,
+                   dir_copies => 1,
+                   backup_dir => '/backups',
+                   file_prefix => 'backup_'
+                   secondary_backup_dir => '/backups2',
+                   secondary_archive_copies => 2,
+                   verbose => 1,
+                 };
 
-$backup->backup([ [ '/etc/httpd/conf' => 'httpd_conf' ],
-                  [ '/var/named' => 'named' ],
-                ]);
+    my $backup = File::Rotate::Backup->new($params);
 
-$backup->rotate;
+    $backup->backup([ [ '/etc/httpd/conf' => 'httpd_conf' ],
+                      [ '/var/named' => 'named' ],
+                    ]);
+
+    $backup->rotate;
 
 =head1 DESCRIPTION
 
@@ -43,6 +40,9 @@ directory.  Then a tar'd and compressed file is created from that
 directory.  By default, bzip2 is used for compression.
 
 This module has only been tested on Linux and Solaris.
+
+The only external programs used are tar and a compression
+program.  Copies and deletes are implemented internally.
 
 =head1 METHODS
 
@@ -57,7 +57,7 @@ use File::Copy ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = 0.03; # update below in POD as well
+        $VERSION = 0.04; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -66,14 +66,16 @@ use File::Copy ();
 
 =head2 new(\%params)
 
-my $backup = File::Rotate::Backup->new({ archive_copies => 2,
-                                         dir_copies => 1,
-                                         backup_dir => '/backups',
-                                         file_prefix => 'backup_'
-                                         secondary_backup_dir => '/backups2',
-                                         secondary_archive_copies => 2,
-                                         verbose => 1,
-                                       });
+    my $params = { archive_copies => 2,
+                   dir_copies => 1,
+                   backup_dir => '/backups',
+                   file_prefix => 'backup_'
+                   secondary_backup_dir => '/backups2',
+                   secondary_archive_copies => 2,
+                   verbose => 1,
+                 };
+
+    my $backup = File::Rotate::Backup->new($params);
 
 Creates a backup object.
 
@@ -546,7 +548,7 @@ __END__
 
 =head1 VERSION
 
-    0.03
+    0.04
 
 =cut
 
