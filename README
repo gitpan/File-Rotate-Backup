@@ -3,15 +3,22 @@ NAME
     them on unix.
 
 SYNOPSIS
-    my $backup = File::Rotate::Backup->new({ archive_copies => 2, dir_copies
-    => 1, backup_dir => '/backups', file_prefix => 'backup_'
-    secondary_backup_dir => '/backups2', secondary_archive_copies => 2,
-    verbose => 1, });
+        my $params = { archive_copies => 2,
+                       dir_copies => 1,
+                       backup_dir => '/backups',
+                       file_prefix => 'backup_'
+                       secondary_backup_dir => '/backups2',
+                       secondary_archive_copies => 2,
+                       verbose => 1,
+                     };
 
-    $backup->backup([ [ '/etc/httpd/conf' => 'httpd_conf' ], [ '/var/named'
-    => 'named' ], ]);
+        my $backup = File::Rotate::Backup->new($params);
 
-    $backup->rotate;
+        $backup->backup([ [ '/etc/httpd/conf' => 'httpd_conf' ],
+                          [ '/var/named' => 'named' ],
+                        ]);
+
+        $backup->rotate;
 
 DESCRIPTION
     This module will make backups and rotate them according to your
@@ -28,10 +35,16 @@ DESCRIPTION
 
 METHODS
   new(\%params)
-    my $backup = File::Rotate::Backup->new({ archive_copies => 2, dir_copies
-    => 1, backup_dir => '/backups', file_prefix => 'backup_'
-    secondary_backup_dir => '/backups2', secondary_archive_copies => 2,
-    verbose => 1, });
+        my $params = { archive_copies => 2,
+                       dir_copies => 1,
+                       backup_dir => '/backups',
+                       file_prefix => 'backup_'
+                       secondary_backup_dir => '/backups2',
+                       secondary_archive_copies => 2,
+                       verbose => 1,
+                     };
+
+        my $backup = File::Rotate::Backup->new($params);
 
     Creates a backup object.
 

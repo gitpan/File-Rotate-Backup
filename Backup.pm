@@ -2,7 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.17 2003/04/14 04:05:48 don Exp $
+# $Id: Backup.pm,v 1.18 2003/04/14 05:32:23 don Exp $
 
 =pod
 
@@ -57,7 +57,7 @@ use File::Copy ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = 0.04; # update below in POD as well
+        $VERSION = 0.05; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -548,7 +548,7 @@ __END__
 
 =head1 VERSION
 
-    0.04
+    0.05
 
 =cut
 
