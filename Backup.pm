@@ -2,7 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.18 2003/04/14 05:32:23 don Exp $
+# $Id: Backup.pm,v 1.20 2003/05/17 00:03:38 don Exp $
 
 =pod
 
@@ -57,7 +57,7 @@ use File::Copy ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = 0.05; # update below in POD as well
+        $VERSION = 0.06; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -124,8 +124,8 @@ files are being processed.
         my $self = {};
         bless $self, ref($proto) || $proto;
         
-        $self->setArchiveCopies($$params{archive_copies} || 1);
-        $self->setDirCopies($$params{dir_copies} || 1);
+        $self->setArchiveCopies(defined($$params{archive_copies}) ? $$params{archive_copies} : 1);
+        $self->setDirCopies(defined($$params{dir_copies}) ? $$params{dir_copies} : 1);
         my $dir = $$params{backup_dir};
         $dir = '/tmp' if $dir eq '';
         $self->setBackupDir($dir);
@@ -147,7 +147,8 @@ an array.  If it is a string, it is expected to be the path to a
 directory that is to be backed up.  If the element is an array,
 the first element is expected to be a directory that is to be
 backed up, and the second should be the name the directory is
-called once it has been copied to the backup directory.
+called once it has been copied to the backup directory.  The
+return value is the name of the archive file created.
 
 =cut
     sub backup {
@@ -202,6 +203,62 @@ specified in the new() constructor.
         return 1 if $secondary_backup_dir eq '';
         my $secondary_archive_copies = $self->getSecondaryArchiveCopies;
         $self->_rotate($secondary_backup_dir, $secondary_archive_copies, 0, '');
+    }
+
+=pod
+
+=head2 my $archives = getArchiveDeleteList()
+
+Returns a list of archive files that will get deleted if the
+rotate() method is called.
+
+=cut
+    sub getArchiveDeleteList {
+        my ($self) = @_;
+        
+        my $backup_dir = $self->getBackupDir;
+        my $archives = $self->_getSortedArchives($backup_dir);
+        my $num_archives = scalar(@$archives);
+        my $archive_copies = $self->getArchiveCopies;
+
+        my @files_to_delete;
+        if ($num_archives > $archive_copies) {
+            my $num_to_delete = $num_archives - $archive_copies;
+            @files_to_delete = @$archives[0 .. $num_to_delete - 1];
+        }
+
+        @files_to_delete = map { "$backup_dir/$_" } @files_to_delete;
+
+        return \@files_to_delete;
+    }
+
+=pod
+
+=head2 my $dirs = getDirDeleteList()
+
+Returns a list of directories that will get deleted if the
+rotate() method is called.
+
+
+=cut
+
+    sub getDirDeleteList {
+        my ($self) = @_;
+
+        my $backup_dir = $self->getBackupDir;
+        my $dirs = $self->_getSortedArchiveDirs($backup_dir);
+        my $num_dirs = scalar(@$dirs);
+        my $dir_copies = $self->getDirCopies;
+
+        my @dirs_to_delete;
+        if ($num_dirs > $dir_copies) {
+            my $num_to_delete = $num_dirs - $dir_copies;
+            @dirs_to_delete = @$dirs[0 .. $num_to_delete - 1];
+        }
+
+        @dirs_to_delete = map { "$backup_dir/$_" } @dirs_to_delete;
+        
+        return \@dirs_to_delete;
     }
 
     sub _rotate {
@@ -548,7 +605,7 @@ __END__
 
 =head1 VERSION
 
-    0.05
+    0.06
 
 =cut
 
