@@ -2,14 +2,14 @@
 # Creation date: 2003-04-12 22:43:55
 # Authors: Don
 # Change log:
-# $Id: Copy.pm,v 1.9 2004/02/17 01:29:32 don Exp $
+# $Id: Copy.pm,v 1.10 2004/03/21 04:56:19 don Exp $
 
 use strict;
 
 {   package File::Rotate::Backup::Copy;
 
     use vars qw($VERSION);
-    $VERSION = do { my @r=(q$Revision: 1.9 $=~/\d+/g); sprintf "%d."."%02d"x$#r,@r };
+    $VERSION = do { my @r=(q$Revision: 1.10 $=~/\d+/g); sprintf "%d."."%02d"x$#r,@r };
 
     use File::Spec;
     use Fcntl ();
@@ -215,9 +215,20 @@ use strict;
                 my $rv = unlink $victim;
                 CORE::flock(FILE, &Fcntl::LOCK_UN);
                 close FILE;
+                if (not $rv and $$params{use_rm}) {
+                    # added for v0.08
+                    $self->debugPrint(1, "unlink() failed -- using /bin/rm\n");
+                    $rv = not system("/bin/rm", "-f", $victim);
+                }
                 return $rv;
             } else {
-                return unlink $victim;
+                my $rv = unlink $victim;
+                if (not $rv and $$params{use_rm}) {
+                    # added for v0.08
+                    $self->debugPrint(1, "unlink() failed -- using /bin/rm\n");
+                    $rv = not system("/bin/rm", "-f", $victim);
+                }
+                return $rv;
             }
         }
     }
@@ -337,6 +348,6 @@ File::Rotate::Backup::Copy -
 
 =head1 VERSION
 
-$Id: Copy.pm,v 1.9 2004/02/17 01:29:32 don Exp $
+$Id: Copy.pm,v 1.10 2004/03/21 04:56:19 don Exp $
 
 =cut

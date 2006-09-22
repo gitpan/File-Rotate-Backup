@@ -1,7 +1,8 @@
 MANIFEST
 Makefile.PL
-Backup.pm
-Backup/Copy.pm
+WhatsNew
+lib/File/Rotate/Backup.pm
+lib/File/Rotate/Backup/Copy.pm
 t/00use.t
 README
 INSTALL

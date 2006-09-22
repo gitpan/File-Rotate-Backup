@@ -3,7 +3,7 @@
 # Creation date: 2003-04-06 13:26:22
 # Authors: Don
 # Change log:
-# $Id: Makefile.PL,v 1.5 2004/02/17 01:29:32 don Exp $
+# $Id: Makefile.PL,v 1.7 2006/09/21 05:49:14 don Exp $
 
 use strict;
 use Carp;
@@ -17,11 +17,11 @@ use Carp;
     WriteMakefile(
                   NAME => 'File::Rotate::Backup',
                   DISTNAME => 'File-Rotate-Backup',
-                  VERSION_FROM => 'Backup.pm',
+                  VERSION_FROM => 'lib/File/Rotate/Backup.pm',
                   ABSTRACT => 'Performs system backups and rotates them',
                   AUTHOR => 'DON OWENS <don@owensnet.com>',
-                  PM => { 'Backup.pm' => '$(INST_LIBDIR)/Backup.pm',
-                          'Backup/Copy.pm' => '$(INST_LIBDIR)/Backup/Copy.pm',
+                  PM => { 'lib/File/Rotate/Backup.pm' => '$(INST_LIBDIR)/Backup.pm',
+                          'lib/File/Rotate/Backup/Copy.pm' => '$(INST_LIBDIR)/Backup/Copy.pm',
                         },
                   PREREQ_PM => { 'File::Spec' => 0,
                                  'Fcntl' => 0,

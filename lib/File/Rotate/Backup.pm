@@ -2,7 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.25 2004/02/17 02:37:26 don Exp $
+# $Id: Backup.pm,v 1.29 2006/09/22 06:24:36 don Exp $
 #
 # Copyright (c) 2003-2004 Don Owens
 #
@@ -57,14 +57,14 @@ program.  Copies and deletes are implemented internally.
 
 use strict;
 use File::Find ();
-use File::Copy ();
+# use File::Copy ();
 
 {   package File::Rotate::Backup;
 
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = '0.07'; # update below in POD as well
+        $VERSION = '0.10'; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -81,6 +81,8 @@ use File::Copy ();
                    secondary_archive_copies => 2,
                    verbose => 1,
                    use_flock => 1,
+                   dir_regex => '\d+-\d+-\d+_\d+_\d+_\d+',
+                   file_regex => '\d+-\d+-\d+_\d+_\d+_\d+',
                  };
 
     my $backup = File::Rotate::Backup->new($params);
@@ -132,9 +134,36 @@ for concurrency control, e.g., when your backup script gets run
 at the same time as another script that is writing the backups to
 tape.
 
+=item use_rm
+
+If set to a true value, the external program /bin/rm will be used
+to remove a file in the case where unlink() fails.  This may
+occur on systems where the file being removed is larger than 2GB
+and such files are not fully supported.
+
+=item dir_regex
+
+Regular expression used to search for directories to rotate.  The
+file_prefix is prepended to this to create the final regular
+expression.  This is useful for rotating directories that were
+not created by this module.
+
+=item file_regex
+
+Regular expression used to search for archive files to rotate.
+The file_prefix is prepended to this to create the final regular
+expression.  This is useful for rotating files that were not
+created by this module.
+
 =back
 
 =cut
+
+#     BEGIN {
+#         use vars '%Config';
+#         eval 'use Config';
+#     }
+
     sub new {
         my ($proto, $params) = @_;
 
@@ -151,7 +180,15 @@ tape.
         $self->setFilePrefix($$params{file_prefix});
         $self->_setVerbose($$params{verbose});
         $self->_setUseFileLock($$params{use_flock});
-        
+        $self->_setUseRm($$params{use_rm});
+        $self->{_archive_dir_regex} = $params->{dir_regex} if defined $params->{dir_regex};
+        $self->{_archive_file_regex} = $params->{file_regex} if defined $params->{file_regex};
+
+#         foreach my $exe ('tar', 'gzip', 'bzip2', 'rm', 'mv') {
+#             if (defined($Config{$exe}) and $Config{$exe} ne '') {
+#                 $self->{'_' . $exe} = $Config{$exe};
+#             }
+#         }
         return $self;
     }
 
@@ -356,6 +393,16 @@ rotate() method is called.
         $$self{_use_flock} = $val;
     }
 
+    sub _getUseRm {
+        my ($self) = @_;
+        return $$self{_use_rm};
+    }
+
+    sub _setUseRm {
+        my ($self, $val) = @_;
+        $$self{_use_rm} = $val;
+    }
+
     sub copy {
         my ($self, $src, $dst) = @_;
 
@@ -367,7 +414,9 @@ rotate() method is called.
         my ($self) = @_;
         my $copy = $$self{_copy_obj};
         unless ($copy) {
-            $copy = File::Rotate::Backup::Copy->new({ use_flock => $self->_getUseFileLock });
+            $copy = File::Rotate::Backup::Copy->new({ use_flock => $self->_getUseFileLock,
+                                                      use_rm => $self->_getUseRm
+                                                    });
             $$self{_copy_obj} = $copy;
         }
         
@@ -389,26 +438,64 @@ rotate() method is called.
         $remove->remove($victim);
     }
 
+    sub _getArchiveFileRegex {
+        my $self = shift;
+        my $prefix = quotemeta($self->getFilePrefix);
+        my $regex;
+        
+        if (exists($self->{_archive_file_regex})) {
+            $regex = $self->{_archive_file_regex};
+        }
+        else {
+            $regex = '\d+-\d+-\d+_\d+_\d+_\d+';
+        }
+
+        $regex = $prefix . $regex;
+
+        return $regex;
+    }
+
     sub _getSortedArchives {
         my ($self, $dir) = @_;
-        my $prefix = quotemeta($self->getFilePrefix);
+        # my $prefix = quotemeta($self->getFilePrefix);
         $dir = $self->getBackupDir if $dir eq '';
         local(*DIR);
         opendir(DIR, $dir) or return undef;
-        my @files = grep { m/^$prefix\d+-\d+-\d+_\d+_\d+_\d+/ and not -d "$dir/$_" } readdir DIR;
+        my $regex = $self->_getArchiveFileRegex;
+        my @files = grep { m/^$regex/ and not -d "$dir/$_" } readdir DIR;
         closedir DIR;
 
         @files = sort { $a cmp $b } @files;
         return \@files;
     }
 
+    sub _getArchiveDirRegex {
+        my $self = shift;
+        my $prefix = quotemeta($self->getFilePrefix);
+
+        my $regex;
+        if (exists($self->{_archive_dir_regex})) {
+            $regex = $self->{_archive_dir_regex};
+            $regex = '' unless defined $regex;
+        }
+        else {
+            $regex = '\d+-\d+-\d+_\d+_\d+_\d+';
+        }
+
+        $regex = $prefix . $regex;
+
+        return $regex;
+    }
+
     sub _getSortedArchiveDirs {
         my ($self, $dir) = @_;
-        my $prefix = quotemeta($self->getFilePrefix);
+        # my $prefix = quotemeta($self->getFilePrefix);
         $dir = $self->getBackupDir if $dir eq '';
         local(*DIR);
         opendir(DIR, $dir) or return undef;
-        my @files = grep { m/^$prefix\d+-\d+-\d+_\d+_\d+_\d+/ and -d "$dir/$_" } readdir DIR;
+        # my @files = grep { m/^$prefix\d+-\d+-\d+_\d+_\d+_\d+/ and -d "$dir/$_" } readdir DIR;'
+        my $regex = $self->_getArchiveDirRegex;
+        my @files = grep { m/^$regex/ and -d "$dir/$_" } readdir DIR;
         closedir DIR;
 
         @files = sort { $a cmp $b } @files;
@@ -437,7 +524,7 @@ rotate() method is called.
         my ($self) = @_;
         my $path = $$self{_compress_program_path};
         if ($path eq '') {
-            return 'bzip2';
+            return $self->{_bzip2_path} || 'bzip2';
         }
 
         return $path;
@@ -633,7 +720,7 @@ __END__
 
 =head1 VERSION
 
-    0.07
+    0.10
 
 =cut
 

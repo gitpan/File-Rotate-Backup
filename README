@@ -44,6 +44,8 @@ METHODS
                        secondary_archive_copies => 2,
                        verbose => 1,
                        use_flock => 1,
+                       dir_regex => '\d+-\d+-\d+_\d+_\d+_\d+',
+                       file_regex => '\d+-\d+-\d+_\d+_\d+_\d+',
                      };
 
         my $backup = File::Rotate::Backup->new($params);
@@ -83,6 +85,24 @@ METHODS
         acquired, the file will not be removed. This is useful for
         concurrency control, e.g., when your backup script gets run at the
         same time as another script that is writing the backups to tape.
+
+    use_rm
+        If set to a true value, the external program /bin/rm will be used to
+        remove a file in the case where unlink() fails. This may occur on
+        systems where the file being removed is larger than 2GB and such
+        files are not fully supported.
+
+    dir_regex
+        Regular expression used to search for directories to rotate. The
+        file_prefix is prepended to this to create the final regular
+        expression. This is useful for rotating directories that were not
+        created by this module.
+
+    file_regex
+        Regular expression used to search for archive files to rotate. The
+        file_prefix is prepended to this to create the final regular
+        expression. This is useful for rotating files that were not created
+        by this module.
 
   backup(\@conf)
     Makes the backup -- creates the backed up directory and archive file.
@@ -133,5 +153,5 @@ COPYRIGHT
         itself.
 
 VERSION
-        0.07
+        0.10
 
