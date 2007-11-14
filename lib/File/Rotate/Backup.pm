@@ -2,13 +2,20 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.29 2006/09/22 06:24:36 don Exp $
+# $Id: Backup.pm,v 1.31 2007/11/14 04:28:51 don Exp $
 #
-# Copyright (c) 2003-2004 Don Owens
+# Copyright (c) 2003-2007 Don Owens.  All rights reserved.
 #
-# All rights reserved. This program is free software; you can
-# redistribute it and/or modify it under the same terms as Perl
-# itself.
+# This is free software; you can redistribute it and/or modify it under
+# the Perl Artistic license.  You should have received a copy of the
+# Artistic license with this distribution, in the file named
+# "Artistic".  You may also obtain a copy from
+# http://regexguy.com/license/Artistic
+#
+# This program is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.
 
 =pod
 
@@ -64,7 +71,7 @@ use File::Find ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = '0.10'; # update below in POD as well
+        $VERSION = '0.11'; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -94,6 +101,11 @@ Creates a backup object.
 =item archive_copies
 
 The number of old archive files to keep.
+
+=item no_archive
+
+If set to true, then no compressed archive(s) will be created 
+even if archive_copies is set.
 
 =item dir_copies
 
@@ -183,6 +195,7 @@ created by this module.
         $self->_setUseRm($$params{use_rm});
         $self->{_archive_dir_regex} = $params->{dir_regex} if defined $params->{dir_regex};
         $self->{_archive_file_regex} = $params->{file_regex} if defined $params->{file_regex};
+        $self->{_no_archive} = $params->{no_archive} ? defined $params->{no_archive} : 0;
 
 #         foreach my $exe ('tar', 'gzip', 'bzip2', 'rm', 'mv') {
 #             if (defined($Config{$exe}) and $Config{$exe} ne '') {
@@ -203,7 +216,8 @@ directory that is to be backed up.  If the element is an array,
 the first element is expected to be a directory that is to be
 backed up, and the second should be the name the directory is
 called once it has been copied to the backup directory.  The
-return value is the name of the archive file created.
+return value is the name of the archive file created; unless
+'no_archive' is set, then it will return an empty string.
 
 =cut
     sub backup {
@@ -213,6 +227,7 @@ return value is the name of the archive file created.
         my $file_prefix = $self->getFilePrefix . $today;
         my $backup_dir = $self->getBackupDir;
         my $dst = "$backup_dir/$file_prefix";
+	my $dst_file = '';
         mkdir $dst, 0755;
 
         my $cp = $self->getCpPath;
@@ -225,14 +240,17 @@ return value is the name of the archive file created.
             }
         }
 
-        my $compress = $self->getCompressProgramPath;
-        my $ext = $self->getCompressExtension;
-        $ext = '.' . $ext unless $ext eq '';
-        my $dst_file = $dst . '.tar' . $ext;
-        my $params = '-p';
-        $params = '-v ' . $params if $self->_getVerbose;
-        my $tar_cmd = $self->getTarPath . " $params -c -f - -C '$backup_dir' '$file_prefix'";
-        system "$tar_cmd | $compress > $dst_file";
+	unless ( $self->{_no_archive} )
+	{
+		my $compress = $self->getCompressProgramPath;
+		my $ext = $self->getCompressExtension;
+		$ext = '.' . $ext unless $ext eq '';
+		$dst_file = $dst . '.tar' . $ext;
+		my $params = '-p';
+		$params = '-v ' . $params if $self->_getVerbose;
+		my $tar_cmd = $self->getTarPath . " $params -c -f - -C '$backup_dir' '$file_prefix'";
+		system "$tar_cmd | $compress > $dst_file";
+	}
 
         return $dst_file;
     }
@@ -708,11 +726,11 @@ __END__
 
 =head1 AUTHOR
 
-    Don Owens <don@owensnet.com>
+    Don Owens <don@regexguy.com>
 
 =head1 COPYRIGHT
 
-    Copyright (c) 2003-2004 Don Owens
+    Copyright (c) 2003-2007 Don Owens
 
     All rights reserved. This program is free software; you can
     redistribute it and/or modify it under the same terms as Perl
@@ -720,7 +738,7 @@ __END__
 
 =head1 VERSION
 
-    0.10
+    0.11
 
 =cut
 

@@ -55,6 +55,10 @@ METHODS
     archive_copies
         The number of old archive files to keep.
 
+    no_archive
+        If set to true, then no compressed archive(s) will be created even
+        if archive_copies is set.
+
     dir_copies
         The number of old backup directories to keep.
 
@@ -111,7 +115,8 @@ METHODS
     be backed up. If the element is an array, the first element is expected
     to be a directory that is to be backed up, and the second should be the
     name the directory is called once it has been copied to the backup
-    directory. The return value is the name of the archive file created.
+    directory. The return value is the name of the archive file created;
+    unless 'no_archive' is set, then it will return an empty string.
 
   rotate()
     Rotates the backup directories and archive files. The number of archive
@@ -143,15 +148,15 @@ METHODS
     path).
 
 AUTHOR
-        Don Owens <don@owensnet.com>
+        Don Owens <don@regexguy.com>
 
 COPYRIGHT
-        Copyright (c) 2003-2004 Don Owens
+        Copyright (c) 2003-2007 Don Owens
 
         All rights reserved. This program is free software; you can
         redistribute it and/or modify it under the same terms as Perl
         itself.
 
 VERSION
-        0.10
+        0.11
 

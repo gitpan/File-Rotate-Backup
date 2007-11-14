@@ -6,4 +6,5 @@ lib/File/Rotate/Backup/Copy.pm
 t/00use.t
 README
 INSTALL
+Artistic
 META.yml                                 Module meta-data (added by MakeMaker)
