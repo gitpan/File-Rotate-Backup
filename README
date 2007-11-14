@@ -150,6 +150,9 @@ METHODS
 AUTHOR
         Don Owens <don@regexguy.com>
 
+CONTRIBUTORS
+        Augie Schwer
+
 COPYRIGHT
         Copyright (c) 2003-2007 Don Owens
 
@@ -158,5 +161,5 @@ COPYRIGHT
         itself.
 
 VERSION
-        0.11
+        0.12
 

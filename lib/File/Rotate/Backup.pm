@@ -2,7 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.31 2007/11/14 04:28:51 don Exp $
+# $Id: Backup.pm,v 1.32 2007/11/14 04:31:44 don Exp $
 #
 # Copyright (c) 2003-2007 Don Owens.  All rights reserved.
 #
@@ -71,7 +71,7 @@ use File::Find ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = '0.11'; # update below in POD as well
+        $VERSION = '0.12'; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -728,6 +728,10 @@ __END__
 
     Don Owens <don@regexguy.com>
 
+=head1 CONTRIBUTORS
+
+    Augie Schwer
+
 =head1 COPYRIGHT
 
     Copyright (c) 2003-2007 Don Owens
@@ -738,7 +742,7 @@ __END__
 
 =head1 VERSION
 
-    0.11
+    0.12
 
 =cut
 
