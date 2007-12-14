@@ -2,7 +2,7 @@
 # Creation date: 2003-03-09 15:38:36
 # Authors: Don
 # Change log:
-# $Id: Backup.pm,v 1.32 2007/11/14 04:31:44 don Exp $
+# $Id: Backup.pm,v 1.33 2007/12/14 03:37:30 don Exp $
 #
 # Copyright (c) 2003-2007 Don Owens.  All rights reserved.
 #
@@ -71,7 +71,7 @@ use File::Find ();
     use vars qw($VERSION);
 
     BEGIN {
-        $VERSION = '0.12'; # update below in POD as well
+        $VERSION = '0.13'; # update below in POD as well
     }
 
     use File::Rotate::Backup::Copy;
@@ -195,7 +195,7 @@ created by this module.
         $self->_setUseRm($$params{use_rm});
         $self->{_archive_dir_regex} = $params->{dir_regex} if defined $params->{dir_regex};
         $self->{_archive_file_regex} = $params->{file_regex} if defined $params->{file_regex};
-        $self->{_no_archive} = $params->{no_archive} ? defined $params->{no_archive} : 0;
+        $self->{_no_archive} = defined $params->{no_archive} ? $params->{no_archive} : 0;
 
 #         foreach my $exe ('tar', 'gzip', 'bzip2', 'rm', 'mv') {
 #             if (defined($Config{$exe}) and $Config{$exe} ne '') {
@@ -742,7 +742,7 @@ __END__
 
 =head1 VERSION
 
-    0.12
+    0.13
 
 =cut
 
